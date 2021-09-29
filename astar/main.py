@@ -2,6 +2,7 @@ from astar import AStar
 from Map import Map_Obj
 
 
+# Apply the path found to the map by recursively visiting each parent node
 def apply_path(astar, node):
     pos = node.state
     val = astar.map_obj.str_map[pos.x][pos.y]
@@ -17,7 +18,7 @@ def main():
     map = Map_Obj(task=task)
     astar = AStar(map)
 
-    node = astar.path()
+    node = astar.find_path()
     apply_path(astar, node)
     astar.map_obj.show_map()
 
