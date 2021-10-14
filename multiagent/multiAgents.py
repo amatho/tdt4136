@@ -144,49 +144,55 @@ class MinimaxAgent(MultiAgentSearchAgent):
         """
         "*** YOUR CODE HERE ***"
 
-        return self.getActionMinimax(gameState)
+        # Call getMax on the root node
+        _, action = self.getMax(
+            gameState, self.index, 0)
+        return action
 
-    def getActionMinimax(self, gameState):
-        maxVal = float('-inf')
-        nextAction = None
-        for action in gameState.getLegalActions(self.index):
-            successor = gameState.generateSuccessor(self.index, action)
-            newMaxVal = self.getActionMin(successor, 1, 0)
-            if newMaxVal > maxVal:
-                maxVal = newMaxVal
-                nextAction = action
-
-        return nextAction
-
-    def getActionMax(self, gameState, agentIndex, currentDepth):
+    def getMax(self, gameState, agentIndex, currentDepth):
+        # Checks if in a terminal state or exceeded maximal depth
         if gameState.isWin() or gameState.isLose() or currentDepth == self.depth:
-            return self.evaluationFunction(gameState)
+            return self.evaluationFunction(gameState), None
 
-        maxVal = float('-inf')
+        maxVal = float('-inf')  # Sets original maxVal to be negative infinity
+        maxAction = None
         for action in gameState.getLegalActions(agentIndex):
             successor = gameState.generateSuccessor(agentIndex, action)
-            maxVal = max(maxVal, self.getActionMin(
-                successor, (agentIndex + 1) % gameState.getNumAgents(), currentDepth))
+            optVal, _ = self.getMin(
+                successor, (agentIndex + 1) % gameState.getNumAgents(), currentDepth)
 
-        return maxVal
+            # A better value was found, update variables
+            if optVal > maxVal:
+                maxVal = optVal
+                maxAction = action
 
-    def getActionMin(self, gameState, agentIndex, currentDepth):
+        return maxVal, maxAction
+
+    def getMin(self, gameState, agentIndex, currentDepth):
         if gameState.isWin() or gameState.isLose() or currentDepth == self.depth:
-            return self.evaluationFunction(gameState)
+            return self.evaluationFunction(gameState), None
 
-        minVal = float('inf')
         if agentIndex + 1 >= gameState.getNumAgents():
-            for action in gameState.getLegalActions(agentIndex):
-                successor = gameState.generateSuccessor(agentIndex, action)
-                minVal = min(minVal, self.getActionMax(
-                    successor, 0, currentDepth + 1))
+            nextFunc = self.getMax
+            nextIndex = 0
+            nextDepth = currentDepth + 1
         else:
-            for action in gameState.getLegalActions(agentIndex):
-                successor = gameState.generateSuccessor(agentIndex, action)
-                minVal = min(minVal, self.getActionMin(
-                    successor, agentIndex + 1, currentDepth))
+            nextFunc = self.getMin
+            nextIndex = agentIndex + 1
+            nextDepth = currentDepth
 
-        return minVal
+        minVal = float('inf')  # Sets original minVal to be infinity
+        minAction = None
+        for action in gameState.getLegalActions(agentIndex):
+            successor = gameState.generateSuccessor(agentIndex, action)
+            optVal, _ = nextFunc(successor, nextIndex, nextDepth)
+
+            # A better value was found, update variables
+            if optVal < minVal:
+                minVal = optVal
+                minAction = action
+
+        return minVal, minAction
 
 
 class AlphaBetaAgent(MultiAgentSearchAgent):
@@ -200,21 +206,24 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
         """
         "*** YOUR CODE HERE ***"
 
-        _, action = self.getActionMax(
+        # Call getMax on the root node
+        _, action = self.getMax(
             gameState, self.index, 0, float('-inf'), float('inf'))
         return action
 
-    def getActionMax(self, gameState, agentIndex, currentDepth, alpha, beta):
+    def getMax(self, gameState, agentIndex, currentDepth, alpha, beta):
+        # Checks if in a terminal state or exceeded maximal depth
         if gameState.isWin() or gameState.isLose() or currentDepth == self.depth:
             return self.evaluationFunction(gameState), None
 
-        maxVal = float('-inf')
+        maxVal = float('-inf')  # Sets original maxVal to be negative infinity
         maxAction = None
         for action in gameState.getLegalActions(agentIndex):
             successor = gameState.generateSuccessor(agentIndex, action)
-            optVal, _ = self.getActionMin(
+            optVal, _ = self.getMin(
                 successor, (agentIndex + 1) % gameState.getNumAgents(), currentDepth, alpha, beta)
 
+            # A better value was found, update variables
             if optVal > maxVal:
                 maxVal = optVal
                 maxAction = action
@@ -226,25 +235,27 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
 
         return maxVal, maxAction
 
-    def getActionMin(self, gameState, agentIndex, currentDepth, alpha, beta):
+    def getMin(self, gameState, agentIndex, currentDepth, alpha, beta):
+        # Checks if in a terminal state or exceeded maximal depth
         if gameState.isWin() or gameState.isLose() or currentDepth == self.depth:
             return self.evaluationFunction(gameState), None
 
         if agentIndex + 1 >= gameState.getNumAgents():
-            nextFunc = self.getActionMax
+            nextFunc = self.getMax
             nextIndex = 0
             nextDepth = currentDepth + 1
         else:
-            nextFunc = self.getActionMin
+            nextFunc = self.getMin
             nextIndex = agentIndex + 1
             nextDepth = currentDepth
 
-        minVal = float('inf')
+        minVal = float('inf')  # Sets original minVal to be infinity
         minAction = None
         for action in gameState.getLegalActions(agentIndex):
             successor = gameState.generateSuccessor(agentIndex, action)
             optVal, _ = nextFunc(successor, nextIndex, nextDepth, alpha, beta)
 
+            # A better value was found, update variables
             if optVal < minVal:
                 minVal = optVal
                 minAction = action
